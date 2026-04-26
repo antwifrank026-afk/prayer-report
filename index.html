@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prayer Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#080c14;
+  --bg2:#0d1220;
+  --bg3:#111827;
+  --bg4:#1a2236;
+  --border:#1e2d45;
+  --border2:#243352;
+  --amber:#f59e0b;
+  --amber2:#fbbf24;
+  --amber-dim:rgba(245,158,11,0.12);
+  --amber-glow:rgba(245,158,11,0.06);
+  --text:#e2e8f0;
+  --text2:#94a3b8;
+  --text3:#475569;
+  --green:#10b981;
+  --green-dim:rgba(16,185,129,0.1);
+  --red:#f43f5e;
+  --red-dim:rgba(244,63,94,0.1);
+  --blue:#3b82f6;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;font-size:14px;overflow:hidden}
+
+/* Layout */
+.app{display:flex;flex-direction:column;height:100vh}
+.topbar{background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20px;display:flex;align-items:center;justify-content:space-between;min-height:52px;flex-shrink:0}
+.brand{display:flex;align-items:center;gap:10px}
+.brand-icon{width:28px;height:28px;background:var(--amber-dim);border:1px solid var(--border2);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.brand-name{font-size:15px;font-weight:600;color:var(--amber);letter-spacing:.5px}
+.topbar-date{font-size:11px;color:var(--text3);font-family:'DM Mono',monospace}
+
+.nav{display:flex;background:var(--bg2);border-bottom:1px solid var(--border);padding:0 20px;gap:2px;overflow-x:auto;flex-shrink:0}
+.nav::-webkit-scrollbar{display:none}
+.nav-item{padding:10px 14px;font-size:11px;font-weight:500;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;letter-spacing:.5px;text-transform:uppercase;transition:all .2s}
+.nav-item:hover{color:var(--text2)}
+.nav-item.active{color:var(--amber);border-bottom-color:var(--amber)}
+
+.content{flex:1;overflow-y:auto;padding:20px}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+
+/* Panels */
+.panel{display:none}
+.panel.active{display:block}
+
+/* Cards */
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:14px}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.card-title{font-size:12px;font-weight:600;color:var(--amber);letter-spacing:.8px;text-transform:uppercase}
+
+/* Stats */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:14px 10px;text-align:center}
+.stat-num{font-family:'DM Mono',monospace;font-size:28px;font-weight:400;line-height:1}
+.stat-label{font-size:10px;color:var(--text3);margin-top:4px;letter-spacing:.5px;text-transform:uppercase}
+
+/* Form elements */
+label{font-size:11px;color:var(--text3);display:block;margin-bottom:4px;letter-spacing:.3px;text-transform:uppercase}
+input[type=text],input[type=date],input[type=email],textarea,select{
+  width:100%;background:var(--bg4);border:1px solid var(--border2);border-radius:8px;
+  color:var(--text);padding:9px 12px;font-family:'Syne',sans-serif;font-size:13px;
+  outline:none;margin-bottom:12px;transition:border-color .2s
+}
+input:focus,textarea:focus,select:focus{border-color:var(--amber)}
+textarea{min-height:80px;resize:vertical}
+select option{background:var(--bg3)}
+
+/* Buttons */
+.btn{background:var(--amber);color:#07090f;border:none;border-radius:8px;padding:10px 18px;font-family:'Syne',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;letter-spacing:.3px;width:100%}
+.btn:hover{background:var(--amber2)}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--text2);font-size:11px;padding:7px 14px;width:auto;border-radius:7px}
+.btn-ghost:hover{border-color:var(--amber);color:var(--amber)}
+.btn-sm{padding:6px 14px;font-size:11px;width:auto;border-radius:6px}
+.btn-icon{background:var(--bg4);border:1px solid var(--border);color:var(--text2);width:30px;height:30px;border-radius:6px;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
+.btn-icon:hover{border-color:var(--amber);color:var(--amber)}
+
+/* Members */
+.member-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-radius:8px;margin-bottom:5px;background:var(--bg4);border:1px solid transparent;transition:all .2s}
+.member-row.present{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.05)}
+.member-row.absent{border-color:rgba(244,63,94,.3);background:rgba(244,63,94,.05)}
+.member-info{flex:1}
+.member-name{font-size:13px;font-weight:500;color:var(--text)}
+.member-role{font-size:10px;color:var(--text3);margin-top:1px}
+.att-chips{display:flex;gap:5px}
+.chip{font-size:10px;padding:4px 10px;border-radius:20px;border:1px solid var(--border2);color:var(--text3);cursor:pointer;transition:all .2s;background:transparent;font-family:'Syne',sans-serif;font-weight:500}
+.chip:hover{border-color:var(--text3)}
+.chip.cp{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.chip.ca{border-color:var(--red);color:var(--red);background:var(--red-dim)}
+
+/* Prayer points */
+.pp-item{background:var(--bg4);border:1px solid var(--border);border-left:3px solid var(--amber);border-radius:0 8px 8px 0;padding:12px 14px;margin-bottom:10px;line-height:1.6;font-size:13px}
+.pp-num{font-size:11px;font-weight:600;color:var(--amber);letter-spacing:.5px;text-transform:uppercase;margin-bottom:5px}
+.pp-text{color:var(--text2)}
+
+/* Chat */
+.chat-wrap{max-height:300px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:8px}
+.chat-wrap::-webkit-scrollbar{width:3px}
+.chat-wrap::-webkit-scrollbar-thumb{background:var(--border2)}
+.bubble{padding:10px 13px;border-radius:10px;font-size:13px;line-height:1.6;max-width:90%}
+.bubble.ai{background:var(--bg4);border:1px solid var(--border);color:var(--text2);align-self:flex-start;white-space:pre-wrap}
+.bubble.user{background:var(--amber-dim);border:1px solid rgba(245,158,11,.2);color:var(--amber2);align-self:flex-end;text-align:right}
+.typing-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--amber);animation:pulse 1s ease-in-out infinite}
+.typing-dot:nth-child(2){animation-delay:.2s}
+.typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes pulse{0%,100%{opacity:.3}50%{opacity:1}}
+
+/* Quick prompts */
+.qp-tag{display:inline-block;background:var(--bg4);border:1px solid var(--border2);color:var(--text2);border-radius:6px;padding:5px 10px;font-size:11px;margin:3px;cursor:pointer;transition:all .2s;font-family:'Syne',sans-serif}
+.qp-tag:hover{border-color:var(--amber);color:var(--amber)}
+
+/* Report */
+.report-pre{background:var(--bg4);border:1px solid var(--border);border-radius:8px;padding:16px;font-family:'DM Mono',monospace;font-size:11px;color:var(--amber2);line-height:1.8;white-space:pre-wrap;word-break:break-word;margin-bottom:12px;overflow-x:auto}
+
+/* Divider */
+.divider{height:1px;background:var(--border);margin:14px 0}
+
+/* Input row */
+.input-row{display:flex;gap:8px;align-items:flex-start}
+.input-row input{margin-bottom:0;flex:1}
+
+/* Grid 2 */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:480px){.grid2{grid-template-columns:1fr}}
+
+/* Badges */
+.badge{font-size:10px;padding:3px 8px;border-radius:4px;font-weight:500}
+.badge-present{background:var(--green-dim);color:var(--green)}
+.badge-absent{background:var(--red-dim);color:var(--red)}
+
+/* Empty state */
+.empty{text-align:center;padding:30px 20px;color:var(--text3);font-size:12px}
+
+/* Notification */
+.notif{position:fixed;bottom:20px;right:20px;background:var(--bg3);border:1px solid var(--amber);border-radius:8px;padding:10px 16px;font-size:12px;color:var(--amber);z-index:999;animation:slideUp .3s ease;pointer-events:none}
+@keyframes slideUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+.section-tag{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-icon">✝</div>
+      <div class="brand-name">Prayer Report</div>
+    </div>
+    <div class="topbar-date" id="topDate"></div>
+  </div>
+
+  <!-- NAV -->
+  <div class="nav">
+    <div class="nav-item active" onclick="tab('attendance',this)">Attendance</div>
+    <div class="nav-item" onclick="tab('prayer',this)">Prayer Points</div>
+    <div class="nav-item" onclick="tab('report',this)">Report</div>
+    <div class="nav-item" onclick="tab('members',this)">Members</div>
+    <div class="nav-item" onclick="tab('ai',this)">AI Assistant</div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- ── ATTENDANCE ── -->
+    <div class="panel active" id="panel-attendance">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px">Session Info</div>
+        <div class="grid2">
+          <div>
+            <label>Date</label>
+            <input type="date" id="sessDate">
+          </div>
+          <div>
+            <label>Theme / Prayer Point</label>
+            <input type="text" id="sessTheme" placeholder="e.g. Healing & Restoration">
+          </div>
+        </div>
+        <label>Scripture Reference</label>
+        <input type="text" id="sessScripture" placeholder="e.g. Psalm 91:1-16">
+        <label>Leader</label>
+        <input type="text" id="sessLeader" placeholder="Name of prayer leader">
+      </div>
+
+      <div class="stats-row">
+        <div class="stat">
+          <div class="stat-num" id="sTotal" style="color:var(--text)">0</div>
+          <div class="stat-label">Members</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="sPresent" style="color:var(--green)">0</div>
+          <div class="stat-label">Present</div>
+        </div>
+        <div class="stat">
+          <div class="stat-num" id="sAbsent" style="color:var(--red)">0</div>
+          <div class="stat-label">Absent</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Roll Call</div>
+          <div style="display:flex;gap:6px">
+            <button class="btn-ghost btn-sm" onclick="markAll('present')">All Present</button>
+            <button class="btn-ghost btn-sm" onclick="markAll('absent')">All Absent</button>
+          </div>
+        </div>
+        <div id="rollList"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title" style="margin-bottom:12px">Session Notes</div>
+        <textarea id="sessNotes" placeholder="Testimonies, announcements, prayer requests..."></textarea>
+      </div>
+
+      <button class="btn" onclick="saveSession()">Save Session</button>
+    </div>
+
+    <!-- ── PRAYER POINTS ── -->
+    <div class="panel" id="panel-prayer">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px">Generate with AI</div>
+        <label>Scripture / Reference</label>
+        <input type="text" id="ppScripture" placeholder="e.g. Isaiah 40:31, Jeremiah 29:11">
+        <label>Theme or Focus</label>
+        <input type="text" id="ppTheme" placeholder="e.g. Breakthrough, Family, Nation">
+        <label>Number of Points</label>
+        <select id="ppCount">
+          <option value="5">5 Points</option>
+          <option value="7" selected>7 Points</option>
+          <option value="10">10 Points</option>
+          <option value="12">12 Points</option>
+        </select>
+        <button class="btn" id="ppBtn" onclick="genPP()">Generate Prayer Points</button>
+      </div>
+      <div id="ppOutput"></div>
+      <div id="savedPPSection" style="display:none">
+        <div class="divider"></div>
+        <div class="section-tag">Saved Prayer Points</div>
+        <div id="savedPPList"></div>
+      </div>
+    </div>
+
+    <!-- ── REPORT ── -->
+    <div class="panel" id="panel-report">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px">Session Report</div>
+        <button class="btn" onclick="buildReport()" style="margin-bottom:8px">Generate Report</button>
+        <button class="btn btn-ghost" style="width:100%" onclick="copyReport()">Copy to Clipboard</button>
+      </div>
+      <div id="reportOut"></div>
+
+      <div class="card" style="margin-top:4px">
+        <div class="card-title" style="margin-bottom:14px">Past Sessions</div>
+        <div id="pastSessions"></div>
+      </div>
+    </div>
+
+    <!-- ── MEMBERS ── -->
+    <div class="panel" id="panel-members">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:14px">Add Member</div>
+        <label>Full Name</label>
+        <div class="input-row">
+          <input type="text" id="newName" placeholder="Full name..." onkeydown="if(event.key==='Enter')addMember()">
+          <button class="btn btn-sm" style="width:auto;padding:10px 16px" onclick="addMember()">Add</button>
+        </div>
+        <label>Role / Cell Group</label>
+        <input type="text" id="newRole" placeholder="e.g. Cell Leader, Intercessor, Member">
+        <label>Phone (optional)</label>
+        <input type="text" id="newPhone" placeholder="+233...">
+      </div>
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">All Members</div>
+          <span style="font-size:11px;color:var(--text3)" id="memberCount">0 members</span>
+        </div>
+        <div id="allMembers"></div>
+      </div>
+    </div>
+
+    <!-- ── AI ASSISTANT ── -->
+    <div class="panel" id="panel-ai">
+      <div class="card">
+        <div class="card-title" style="margin-bottom:4px">AI Prayer Assistant</div>
+        <div style="font-size:11px;color:var(--text3);margin-bottom:14px">Ask about prayer points, scriptures, dates, or meeting help</div>
+        <div class="chat-wrap" id="chatWrap">
+          <div class="bubble ai">Peace be with you! I am your Prayer Assistant. Ask me to generate prayer points from a scripture, give you today's date, suggest intercession topics, or help you run your meeting. How can I serve you today?</div>
+        </div>
+        <div id="typingWrap" style="display:none;padding:8px 0">
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+          <span class="typing-dot"></span>
+        </div>
+        <div class="input-row">
+          <input type="text" id="chatIn" placeholder="Ask anything..." onkeydown="if(event.key==='Enter')sendChat()">
+          <button class="btn btn-sm" style="width:auto;padding:10px 16px" onclick="sendChat()">Send</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title" style="margin-bottom:10px">Quick Prompts</div>
+        <div>
+          <span class="qp-tag" onclick="qp('What is today\'s date and day of the week?')">Today\'s Date</span>
+          <span class="qp-tag" onclick="qp('Give me 7 powerful prayer points for healing based on Isaiah 53:5')">Healing Prayers</span>
+          <span class="qp-tag" onclick="qp('Give me intercession prayer points for Ghana and Africa')">National Intercession</span>
+          <span class="qp-tag" onclick="qp('What scriptures are best for a breakthrough prayer session?')">Breakthrough Scriptures</span>
+          <span class="qp-tag" onclick="qp('Give me an opening prayer for a prayer meeting')">Opening Prayer</span>
+          <span class="qp-tag" onclick="qp('How do I lead an effective prayer meeting?')">Meeting Tips</span>
+          <span class="qp-tag" onclick="qp('Give me 5 prayer points for financial blessing based on Deuteronomy 28')">Financial Blessing</span>
+          <span class="qp-tag" onclick="qp('Give me prayer points for family protection')">Family Protection</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- end content -->
+</div><!-- end app -->
+
+<script>
+// ── STATE ──
+let members = JSON.parse(localStorage.getItem('pr_members')||'[]');
+let attendance = {};
+let sessions = JSON.parse(localStorage.getItem('pr_sessions')||'[]');
+let savedPPs = JSON.parse(localStorage.getItem('pr_pps')||'[]');
+let chatHistory = [];
+let lastReport = '';
+
+const API = 'https://api.anthropic.com/v1/messages';
+
+// ── INIT ──
+(function init(){
+  const now = new Date();
+  document.getElementById('topDate').textContent = now.toLocaleDateString('en-GH',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  document.getElementById('sessDate').value = now.toISOString().split('T')[0];
+  renderRoll();
+  renderAllMembers();
+  renderSavedPPs();
+  renderPastSessions();
+})();
+
+// ── TABS ──
+function tab(name, el){
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+  if(name==='attendance') renderRoll();
+  if(name==='members') renderAllMembers();
+  if(name==='prayer') renderSavedPPs();
+  if(name==='report') renderPastSessions();
+}
+
+// ── NOTIFY ──
+function notify(msg){
+  const n = document.createElement('div');
+  n.className='notif'; n.textContent=msg;
+  document.body.appendChild(n);
+  setTimeout(()=>n.remove(), 2500);
+}
+
+// ── MEMBERS ──
+function addMember(){
+  const name = document.getElementById('newName').value.trim();
+  const role = document.getElementById('newRole').value.trim();
+  const phone = document.getElementById('newPhone').value.trim();
+  if(!name){notify('Enter a name first'); return;}
+  if(members.find(m=>m.name.toLowerCase()===name.toLowerCase())){notify('Member already exists'); return;}
+  members.push({name,role,phone});
+  saveM();
+  document.getElementById('newName').value='';
+  document.getElementById('newRole').value='';
+  document.getElementById('newPhone').value='';
+  renderAllMembers();
+  notify('Member added');
+}
+
+function removeMember(name){
+  if(!confirm('Remove '+name+'?')) return;
+  members = members.filter(m=>m.name!==name);
+  saveM();
+  renderAllMembers();
+  renderRoll();
+}
+
+function saveM(){
+  localStorage.setItem('pr_members',JSON.stringify(members));
+  document.getElementById('memberCount').textContent = members.length+' member'+(members.length!==1?'s':'');
+}
+
+function renderAllMembers(){
+  const el = document.getElementById('allMembers');
+  document.getElementById('memberCount').textContent = members.length+' member'+(members.length!==1?'s':'');
+  if(!members.length){el.innerHTML='<div class="empty">No members yet. Add your first member above.</div>';return;}
+  el.innerHTML = members.map(m=>`
+    <div class="member-row">
+      <div class="member-info">
+        <div class="member-name">${m.name}</div>
+        <div class="member-role">${[m.role,m.phone].filter(Boolean).join(' · ')||'Member'}</div>
+      </div>
+      <button class="btn-icon" onclick="removeMember('${m.name.replace(/'/g,"\\'")}')" title="Remove" style="color:var(--red);border-color:rgba(244,63,94,.3)">✕</button>
+    </div>
+  `).join('');
+}
+
+// ── ATTENDANCE ──
+function renderRoll(){
+  const el = document.getElementById('rollList');
+  if(!members.length){el.innerHTML='<div class="empty">Add members in the Members tab first.</div>';updateStats();return;}
+  el.innerHTML = members.map(m=>{
+    const s = attendance[m.name]||'none';
+    return `
+    <div class="member-row ${s}" id="mr_${m.name.replace(/\W/g,'_')}">
+      <div class="member-info">
+        <div class="member-name">${m.name}</div>
+        ${m.role?`<div class="member-role">${m.role}</div>`:''}
+      </div>
+      <div class="att-chips">
+        <button class="chip ${s==='present'?'cp':''}" onclick="setAtt('${m.name.replace(/'/g,"\\'")}','present')">Present</button>
+        <button class="chip ${s==='absent'?'ca':''}" onclick="setAtt('${m.name.replace(/'/g,"\\'")}','absent')">Absent</button>
+      </div>
+    </div>`;
+  }).join('');
+  updateStats();
+}
+
+function setAtt(name, status){
+  attendance[name] = attendance[name]===status?'none':status;
+  renderRoll();
+}
+
+function markAll(s){
+  members.forEach(m=>attendance[m.name]=s);
+  renderRoll();
+}
+
+function updateStats(){
+  const tot = members.length;
+  const pre = Object.values(attendance).filter(v=>v==='present').length;
+  const abs = Object.values(attendance).filter(v=>v==='absent').length;
+  document.getElementById('sTotal').textContent=tot;
+  document.getElementById('sPresent').textContent=pre;
+  document.getElementById('sAbsent').textContent=abs;
+}
+
+function saveSession(){
+  const date = document.getElementById('sessDate').value;
+  if(!date){notify('Select a session date first');return;}
+  const sess = {
+    date,
+    theme: document.getElementById('sessTheme').value,
+    scripture: document.getElementById('sessScripture').value,
+    leader: document.getElementById('sessLeader').value,
+    notes: document.getElementById('sessNotes').value,
+    attendance:{...attendance},
+    members:[...members],
+    saved: new Date().toISOString()
+  };
+  sessions.push(sess);
+  localStorage.setItem('pr_sessions',JSON.stringify(sessions));
+  notify('Session saved ✓');
+}
+
+// ── PRAYER POINTS ──
+async function genPP(){
+  const scripture = document.getElementById('ppScripture').value.trim();
+  const theme = document.getElementById('ppTheme').value.trim();
+  const count = document.getElementById('ppCount').value;
+  if(!scripture){notify('Enter a scripture first');return;}
+
+  const btn = document.getElementById('ppBtn');
+  btn.disabled=true; btn.textContent='Generating...';
+  document.getElementById('ppOutput').innerHTML=`<div class="card"><div style="text-align:center;padding:20px;color:var(--text3);font-size:12px">AI is generating prayer points...</div></div>`;
+
+  const prompt=`You are a powerful prayer leader. Generate exactly ${count} fervent, specific prayer points based on:\nScripture: ${scripture}${theme?'\nTheme: '+theme:''}\n\nFormat EXACTLY like this for each point:\nPOINT [number]: [Short Bold Title]\n[2-3 sentences of specific, scripture-based intercessory prayer]\n\nMake them powerful, biblically grounded, and suitable for group prayer.`;
+
+  try{
+    const res = await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})});
+    const data = await res.json();
+    const text = data.content?.[0]?.text||'';
+    displayPP(text, scripture);
+  }catch(e){
+    document.getElementById('ppOutput').innerHTML=`<div class="card" style="color:var(--red);font-size:12px">Error: ${e.message}. Check your connection.</div>`;
+  }
+  btn.disabled=false; btn.textContent='Generate Prayer Points';
+}
+
+function displayPP(text, scripture){
+  const blocks = text.split(/\n(?=POINT\s+\d+:)/i).filter(b=>b.trim());
+  let html='';
+  if(blocks.length>1){
+    blocks.forEach(block=>{
+      const lines = block.split('\n').filter(l=>l.trim());
+      const title = lines[0]||'';
+      const body = lines.slice(1).join(' ').trim();
+      html+=`<div class="pp-item"><div class="pp-num">${title}</div><div class="pp-text">${body}</div></div>`;
+    });
+  } else {
+    html=`<div class="pp-item"><div class="pp-text" style="white-space:pre-wrap">${text}</div></div>`;
+  }
+  const safeT = scripture.replace(/`/g,"'").replace(/"/g,'&quot;');
+  const safeText = text.replace(/`/g,"'").replace(/\\/g,'\\\\');
+  document.getElementById('ppOutput').innerHTML=`
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📖 ${scripture}</div>
+        <button class="btn-ghost btn-sm" onclick="savePP('${safeT}',\`${safeText}\`)">Save</button>
+      </div>
+      ${html}
+    </div>`;
+  document.getElementById('sessScripture').value=scripture;
+}
+
+function savePP(scripture, text){
+  savedPPs.push({scripture,text,date:new Date().toLocaleDateString('en-GH')});
+  localStorage.setItem('pr_pps',JSON.stringify(savedPPs));
+  renderSavedPPs();
+  notify('Prayer points saved ✓');
+}
+
+function renderSavedPPs(){
+  const sec = document.getElementById('savedPPSection');
+  const el = document.getElementById('savedPPList');
+  if(!savedPPs.length){sec.style.display='none';return;}
+  sec.style.display='block';
+  el.innerHTML = savedPPs.slice().reverse().map((pp,i)=>`
+    <div class="card" style="margin-bottom:8px">
+      <div class="card-header" style="margin-bottom:8px">
+        <div style="font-size:12px;font-weight:500;color:var(--amber)">📖 ${pp.scripture}</div>
+        <span style="font-size:10px;color:var(--text3)">${pp.date}</span>
+      </div>
+      <div style="font-size:11px;color:var(--text3);white-space:pre-wrap;line-height:1.6">${pp.text.substring(0,280)}${pp.text.length>280?'...':''}</div>
+    </div>
+  `).join('');
+}
+
+// ── REPORT ──
+function buildReport(){
+  const date = document.getElementById('sessDate').value||new Date().toISOString().split('T')[0];
+  const theme = document.getElementById('sessTheme').value||'General Prayer';
+  const scripture = document.getElementById('sessScripture').value||'N/A';
+  const leader = document.getElementById('sessLeader').value||'N/A';
+  const notes = document.getElementById('sessNotes').value||'None';
+  const d = new Date(date);
+  const dateStr = d.toLocaleDateString('en-GH',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const present = members.filter(m=>attendance[m.name]==='present').map(m=>m.name);
+  const absent = members.filter(m=>attendance[m.name]==='absent').map(m=>m.name);
+  const unmarked = members.filter(m=>!attendance[m.name]||attendance[m.name]==='none').map(m=>m.name);
+  const pct = members.length?Math.round(present.length/members.length*100):0;
+
+  lastReport=`PRAYER MEETING ATTENDANCE REPORT
+${'═'.repeat(42)}
+
+Date       : ${dateStr}
+Theme      : ${theme}
+Scripture  : ${scripture}
+Leader     : ${leader}
+
+ATTENDANCE SUMMARY
+${'─'.repeat(42)}
+Total Members  : ${members.length}
+Present        : ${present.length} (${pct}%)
+Absent         : ${absent.length}
+Unmarked       : ${unmarked.length}
+
+PRESENT (${present.length})
+${'─'.repeat(42)}
+${present.length?present.map((n,i)=>`${String(i+1).padStart(2,'0')}. ${n}`).join('\n'):'None recorded'}
+
+ABSENT (${absent.length})
+${'─'.repeat(42)}
+${absent.length?absent.map((n,i)=>`${String(i+1).padStart(2,'0')}. ${n}`).join('\n'):'None recorded'}
+
+${unmarked.length?`UNMARKED (${unmarked.length})\n${'─'.repeat(42)}\n${unmarked.map((n,i)=>`${String(i+1).padStart(2,'0')}. ${n}`).join('\n')}\n\n`:''}SESSION NOTES
+${'─'.repeat(42)}
+${notes}
+
+${'─'.repeat(42)}
+Generated: ${new Date().toLocaleString('en-GH')}
+Prayer Report App`;
+
+  document.getElementById('reportOut').innerHTML=`<div class="report-pre">${lastReport}</div>`;
+}
+
+function copyReport(){
+  if(!lastReport){buildReport();}
+  navigator.clipboard.writeText(lastReport).then(()=>notify('Report copied ✓')).catch(()=>notify('Copy failed — try selecting text manually'));
+}
+
+function renderPastSessions(){
+  const el = document.getElementById('pastSessions');
+  if(!sessions.length){el.innerHTML='<div class="empty">No saved sessions yet.</div>';return;}
+  el.innerHTML = sessions.slice().reverse().slice(0,10).map(s=>{
+    const pre = Object.values(s.attendance||{}).filter(v=>v==='present').length;
+    const tot = (s.members||[]).length;
+    return `
+    <div class="member-row" style="margin-bottom:6px">
+      <div class="member-info">
+        <div class="member-name" style="font-size:12px">${new Date(s.date).toLocaleDateString('en-GH',{weekday:'short',month:'short',day:'numeric'})}</div>
+        <div class="member-role">${s.theme||'General Prayer'} · ${s.scripture||''}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;color:var(--green);font-weight:500">${pre}/${tot}</div>
+        <div style="font-size:10px;color:var(--text3)">present</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── AI CHAT ──
+async function sendChat(){
+  const inp = document.getElementById('chatIn');
+  const msg = inp.value.trim();
+  if(!msg) return;
+  inp.value='';
+  addBubble(msg,'user');
+  chatHistory.push({role:'user',content:msg});
+  document.getElementById('typingWrap').style.display='block';
+
+  const today = new Date().toLocaleDateString('en-GH',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const mList = members.map(m=>m.name).join(', ')||'No members added yet';
+  const system=`You are a helpful, warm Prayer Meeting Assistant. Today is ${today}. The congregation has these members: ${mList}. You help with prayer points from scripture, intercession topics, spiritual guidance, and meeting logistics. Always be warm, encouraging, and scripture-rooted. Keep answers concise and practical. When asked for the date, state it clearly.`;
+
+  try{
+    const res = await fetch(API,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system,messages:chatHistory})});
+    const data = await res.json();
+    const reply = data.content?.[0]?.text||'Sorry, no response received.';
+    chatHistory.push({role:'assistant',content:reply});
+    addBubble(reply,'ai');
+  }catch(e){
+    addBubble('Connection error: '+e.message,'ai');
+  }
+  document.getElementById('typingWrap').style.display='none';
+}
+
+function addBubble(text,role){
+  const w = document.getElementById('chatWrap');
+  const d = document.createElement('div');
+  d.className='bubble '+role;
+  d.textContent=text;
+  w.appendChild(d);
+  w.scrollTop=w.scrollHeight;
+}
+
+function qp(prompt){
+  document.getElementById('chatIn').value=prompt;
+  sendChat();
+  // switch to AI tab if not already there
+  document.querySelectorAll('.nav-item').forEach((n,i)=>{
+    if(n.textContent.trim()==='AI Assistant'){tab('ai',n);}
+  });
+}
+</script>
+</body>
+</html>
